@@ -3,7 +3,7 @@
 ## Non-negotiables
 - No destructive operations on user files or settings.
 - Never execute or evaluate user-provided command strings.
-- Always escape and sanitize any data used in title sequences.
+- Always sanitize any data used in terminal titles.
 - Degrade gracefully if shell integration or execution events are unavailable.
 
 ## Guardrails
@@ -11,10 +11,15 @@
 - Strip control characters and enforce length limits.
 - If parsing fails, do not change the title.
 
-## Title escape sequence guardrails
-- Only emit OSC 0/2 sequences with a fixed template; never interpolate untrusted input into shell code.
-- Strip all control characters (ESC, BEL, ST, and ASCII < 0x20 / 0x7F), plus newlines and tabs, before emitting.
-- Enforce a conservative max title length (<= 240 chars) to avoid Windows' 255-char VT limit.
-- Prefer ST terminator (`ESC \\`) when possible; fall back to BEL only when necessary.
-- On Linux/bash, use `printf` with `%s` for title emission; never use `echo -e` or `$'...'` with untrusted input.
-- Never pass titles through command substitution or backticks; treat all titles as data, not code.
+## Terminal rename guardrails
+- Use VS Code terminal rename command only; do not send OSC/printf sequences.
+- Strip control characters and enforce a conservative max title length.
+- Never execute or interpolate user-provided commands in the terminal.
+
+## Failure-mode mitigations
+- Shell integration or execution events missing: log once and no-op (no errors, no title changes).
+- Empty/invalid commandLine: skip rename and log only in debug mode.
+- Internal/printf/OSC-like commands: ignore to prevent recursion or spam.
+- Rapid-fire events: rate limit and suppress duplicate titles per terminal.
+- Rename failures (command unavailable, terminal gone): catch and log without throwing.
+- Ambiguous multi-command lines: truncate to the first command segment before parsing.

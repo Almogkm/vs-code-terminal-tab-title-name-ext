@@ -47,7 +47,7 @@ Perform a self-check and produce:
 
 Self-check procedure:
 1) Re-read all `docs/learning_*.md` created so far.
-2) Re-read all `extension/src/*.ts`.
+2) Re-read all `extension/*.js` (and any `extension/**/*.js` submodules).
 3) Confirm code matches:
    - `DECISIONS.md`
    - `RISKS_AND_GUARDRAILS.md`
@@ -68,8 +68,8 @@ If a run produces large logs:
 
 If any of these occur, stop coding and create a checkpoint that explains:
 - Shell execution events are missing / not firing
-- `${sequence}` does not update tab titles as expected
-- The title escape sequence is not persisting
+- `workbench.action.terminal.renameWithArg` does not update tab titles as expected
+- Titles revert immediately or rename loops appear
 - The approach depends on proposed/unstable APIs
 
 Then branch to an alternative plan (documented in `DECISIONS.md`).

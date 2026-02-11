@@ -34,23 +34,21 @@ Cursor is a VS Code fork; it likely:
 **Crucial conclusion:** In stock VS Code, to keep titles persistent after the command completes, you must set the title via a mechanism that is *not* tied to the active process name.
 
 ### Most robust mechanism (design decision)
-Use **terminal title sequences** (OSC sequences) and VS Code’s tab-title variable:
+Use **VS Code’s terminal rename command**:
 
-- VS Code can use `${sequence}` as terminal tab title (the title set by the terminal’s title escape sequence).
-- If the extension sends an OSC sequence to set title right when a command starts, the title can persist after the command ends.
-
-This avoids relying on “rename terminal” APIs that may not exist or may be unstable.
+- Rename terminals via `workbench.action.terminal.renameWithArg` using the parsed title.
+- This avoids reliance on OSC title sequences or `${sequence}` settings.
 
 ---
 
 ## High-level architecture
 
-### Primary strategy: Title sequences + shell execution detection
+### Primary strategy: Terminal rename + shell execution detection
 1. **Detect command starts** in a terminal using VS Code’s terminal shell integration events.
 2. **Parse** the command line to infer:
    - language/tool (python/R/bash/node/etc)
    - “primary” script file (basename)
-3. **Set terminal title** by sending an OSC title sequence into that terminal (shell-safe).
+3. **Rename the terminal tab** using `workbench.action.terminal.renameWithArg`.
 4. Do **not** reset title on completion (so it remains).
 
 ### Key dependencies / prerequisites
@@ -61,7 +59,7 @@ This avoids relying on “rename terminal” APIs that may not exist or may be u
 - Never evaluate or execute user-provided command strings.
 - Never run network calls.
 - Never modify user files outside extension folder.
-- If sending text to the terminal, only send fixed “printf title escape sequence” payloads with carefully escaped values.
+- Do not send OSC/printf sequences; use VS Code rename only.
 
 ---
 
@@ -104,11 +102,10 @@ Create a new repo folder (any name), with at least:
 - `prompts/` (one prompt per step below, as `.md`)
 - `extension/` (VS Code extension source)
   - `package.json`
-  - `src/extension.ts`
-  - `tsconfig.json`
+  - `extension.js`
+  - `title.js`
+  - `parser.js`
   - `.vscode/launch.json`
-  - `.vscode/tasks.json`
-  - `eslint`/`prettier` optional but recommended
 - `docs/`
   - learning notes
   - API references
@@ -141,11 +138,11 @@ See `prompts/000_bootstrap.md`.
 
 ---
 
-### Step 1 — Learning: VS Code terminal tab titling + `${sequence}`
+### Step 1 — Learning: VS Code terminal tab titling + rename API
 **Goal**
 - Learn and summarize:
   - terminal tabs title variables
-  - `${sequence}` behavior
+  - how terminal titles can be set or renamed
   - shell integration requirements
   - any limitations
 
@@ -176,18 +173,18 @@ See `prompts/020_learn_vscode_shell_execution_events.md`.
 
 ---
 
-### Step 3 — Learning: terminal title escape sequences (OSC)
+### Step 3 — Learning: terminal title escape sequences (OSC) — historical
 **Goal**
-- Learn OSC sequences that set terminal title (OSC 0 / OSC 2).
-- Learn shell-safe ways to emit them (bash/zsh, powershell, cmd).
-- Decide escaping strategy for title text.
+- (Historical) Learn OSC sequences that set terminal title (OSC 0 / OSC 2).
+- (Historical) Learn shell-safe ways to emit them (bash/zsh, powershell, cmd).
+- (Historical) Decide escaping strategy for title text.
 
 **Artifacts**
-- `docs/learning_terminal_title_sequences.md`
-- `CHECKPOINTS/030_terminal_title_sequences.md`
+- `docs/learning_terminal_title_sequences.md` (historical reference)
+- `CHECKPOINTS/030_terminal_title_sequences.md` (historical reference)
 
 **Prompt**
-See `prompts/030_learn_terminal_title_sequences.md`.
+See `prompts/030_learn_terminal_title_sequences.md` (historical).
 
 ---
 
@@ -215,13 +212,14 @@ See `prompts/040_learn_cursor_terminal_titles.md`.
   - `python -m module` (title `Python: -m module` or `Python: module`)
   - `Rscript file.R`, `R -f file.R`
   - `bash file.sh`, `sh file.sh`, `zsh file.sh`
-  - `node file.js`, `ts-node file.ts`
+  - `node file.js`
   - `pytest ...`, `snakemake ...`, `make ...` (fallback patterns)
 - Decide whether to keep full basename only or include args.
 
 **Artifacts**
 - `docs/parsing_rules.md`
-- `src/parser.ts` (pure functions)
+- `extension/parser.js` (pure functions used at runtime)
+- `src/parser.ts` (legacy reference; not used at runtime)
 - `CHECKPOINTS/050_parsing_rules.md`
 
 **Prompt**
@@ -235,7 +233,7 @@ See `prompts/050_design_parsing_rules.md`.
 
 **Artifacts**
 - `extension/package.json`
-- `extension/src/extension.ts`
+- `extension/extension.js`
 - `CHECKPOINTS/060_extension_skeleton.md`
 
 **Prompt**
@@ -243,16 +241,29 @@ See `prompts/060_build_extension_skeleton.md`.
 
 ---
 
+### Step 6.5 — Pivot to JS no-build entrypoint
+**Goal**
+- Ensure the extension loads without running npm/tsc by using a CommonJS entrypoint.
+- Keep TypeScript files in place but do not require compiled `out/` artifacts.
+
+**Artifacts**
+- `extension/extension.js`
+- `CHECKPOINTS/061_no_build_js_entrypoint.md`
+
+**Prompt**
+See `prompts/061_no_build_js_entrypoint.md`.
+
+---
+
 ### Step 7 — Implement detection + title setting (MVP)
 **Goal**
 - Listen for terminal shell execution start.
 - Compute title.
-- Send title sequence to the same terminal.
-- Use `${sequence}` in tabs title instructions (document it clearly).
+- Rename the terminal via `workbench.action.terminal.renameWithArg`.
 
 **Artifacts**
-- `extension/src/extension.ts`
-- `extension/src/title.ts`
+- `extension/extension.js`
+- `extension/title.js`
 - `docs/user_setup.md`
 - `CHECKPOINTS/070_mvp_title_setting.md`
 
@@ -350,7 +361,7 @@ See `prompts/120_release.md`.
 
 After every ~2–3 coding steps, run a self-check:
 1. Re-read all `docs/learning_*.md` created so far.
-2. Re-read all `.ts` files in `extension/src`.
+2. Re-read all `.js` files in `extension/`.
 3. Update:
    - `DECISIONS.md` if assumptions changed
    - `TODO.md` with discovered issues
@@ -391,4 +402,3 @@ Stretch:
 
 ## Prompts index
 All step prompts are pre-generated in `prompts/` by this scheme.
-
