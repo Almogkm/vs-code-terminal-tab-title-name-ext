@@ -1,20 +1,11 @@
 # DECISIONS.md
 
-## Initial hypotheses (to verify during learning)
+## Initial design hypotheses
+1. Use terminal title sequences plus `${sequence}` to persist tab titles after command exit.
+2. Detect command starts via terminal shell execution events.
+3. Parse command lines deterministically with conservative rules.
 
-1) **Persistent titles require title sequences**  
-VS Code’s default title behavior follows the foreground process and reverts to the shell after a command ends. To persist titles, we likely need to set the terminal title via an OSC title sequence and use `${sequence}` for terminal tab titles.
-
-2) **Detect executions via shell execution events**  
-Use VS Code terminal shell integration events (start/end) to access the executed command line in a stable way.
-
-3) **Parsing should be deterministic and conservative**  
-Prefer a small set of robust patterns; fall back to a safe generic title rather than guessing.
-
-4) **Security-first**  
-Never execute the command being observed; only emit fixed payloads into the terminal for title setting, with strict sanitization.
-
-## Unknowns to resolve
-- Are terminal shell execution events stable and available in current VS Code?
-- How reliable is `${sequence}` across shells and platforms?
-- Does “Run Python File in Dedicated Terminal” trigger shell execution events consistently?
+## Cursor repo archeology findings (Feb 11, 2026)
+1. Local open-source snapshots use xterm.js in the renderer and node-pty in the main process.
+2. No evidence of terminal title handling (OSC sequences or xterm `onTitleChange`) appears in these repos.
+3. Therefore, our design should rely on VS Code APIs + OSC title sequences rather than Cursor-specific behavior.

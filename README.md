@@ -1,18 +1,12 @@
-# Terminal Rename Extension — Cursor-like Terminal Tab Titles
+# VS Code Terminal Title Persistor
 
-## What this is
-A VS Code extension that sets integrated terminal **tab titles** based on the last command you ran (e.g., `Python: calculate_TVA_single.py`) and keeps the title after the process exits.
+A VS Code extension skeleton to persist terminal tab titles based on the last executed command (Cursor-like behavior).
+
+## Goal
+- Set and persist terminal tab titles after a command finishes.
+
+## Core idea
+- Emit an OSC title sequence and rely on the terminal tab title variable `${sequence}` for persistence.
 
 ## Status
-Design + learning plan included. Implementation steps are executed by an agent following `TERMINAL_RENAME_EXT_INSTRUCTIONS_GRAND_SCHEME.md`.
-
-## Key idea
-Use terminal title escape sequences (OSC) and VS Code terminal tab title variable `${sequence}` for persistence.
-
-## How to run (later)
-- Open `extension/` in VS Code
-- Press F5 to run Extension Development Host
-- Validate with `docs/test_plan.md` (once created)
-
-## Safety
-See `RISKS_AND_GUARDRAILS.md`.
+- Repository bootstrap only. See `CHECKPOINTS/000_bootstrap.md`.

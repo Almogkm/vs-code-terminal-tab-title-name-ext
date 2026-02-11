@@ -1,12 +1,11 @@
 # EVALS.md
 
-(Placeholder — will be populated after MVP.)
-
-## Evaluation goals
-- Title persists after command ends.
-- Works with “Run Python File in Dedicated Terminal”.
-- Supports python/R/bash/sh at minimum.
+## Evaluation targets
+- Title persists after command completion.
+- Works with common shells and VS Code tasks.
+- Fails safely when shell integration is missing.
 
 ## Minimal manual checks
-- Run `python calculate_TVA_single.py` → title becomes `Python: calculate_TVA_single.py` and stays.
-- Run `bash run.sh` → title becomes `bash: run.sh` and stays.
+- Run `python script.py` and confirm the title updates and persists.
+- Run `bash run.sh` and confirm the title updates and persists.
+- Disable shell integration and confirm no errors or title changes.
