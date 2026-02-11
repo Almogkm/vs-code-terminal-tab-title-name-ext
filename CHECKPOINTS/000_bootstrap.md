@@ -1,14 +1,10 @@
 # CHECKPOINTS/000_bootstrap.md
 
-## Created
-- Repo skeleton docs: README, SKILLS, DECISIONS, RISKS_AND_GUARDRAILS, EVALS
-- Instruction scheme: TERMINAL_RENAME_EXT_INSTRUCTIONS_GRAND_SCHEME.md
-- Step prompts under prompts/
+## Summary
+- Created core repository docs: `README.md`, `SKILLS.md`, `DECISIONS.md`, `RISKS_AND_GUARDRAILS.md`, `EVALS.md`, and `TODO.md`.
+- Added required folders: `docs/`, `CHECKPOINTS/`, and `prompts/`.
 
-## Not done yet
-- No code written.
-- Learning steps not executed.
-
-## Biggest unknowns
-- Exact VS Code APIs for detecting shell executions.
-- Best cross-shell method to emit title sequences.
+## Unknowns
+- Which VS Code shell execution events are stable and available.
+- Exact OSC title sequence handling across shells and platforms.
+- Best deterministic parsing rules for command lines.
