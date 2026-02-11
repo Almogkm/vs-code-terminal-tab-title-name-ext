@@ -1,5 +1,7 @@
 # Learning: VS Code Terminal Tab Titles & Variables
 
+> **Status (partially historical):** The `${sequence}` focus below reflects a prior design that used OSC title sequences. We now rename terminals via VS Code’s `workbench.action.terminal.renameWithArg`. Content is preserved for reference.
+
 ## Sources
 - VS Code Terminal Appearance: https://code.visualstudio.com/docs/terminal/appearance
 - VS Code Terminal Shell Integration: https://code.visualstudio.com/docs/terminal/shell-integration

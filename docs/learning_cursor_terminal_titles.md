@@ -35,7 +35,7 @@
 
 ## Implications
 - The open-source Cursor snapshots do not provide a reference implementation for terminal title naming.
-- We should proceed with the VS Code extension approach (shell integration events + OSC title sequences).
+- We should proceed with the VS Code extension approach (shell integration events + terminal rename via `workbench.action.terminal.renameWithArg`).
 
 ## Unknowns
 - Proprietary Cursor builds may include internal logic not present in these snapshots.
