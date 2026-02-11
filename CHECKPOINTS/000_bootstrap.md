@@ -6,5 +6,6 @@
 
 ## Unknowns
 - Which VS Code shell execution events are stable and available.
-- Exact OSC title sequence handling across shells and platforms.
+- Historical: exact OSC title sequence handling across shells and platforms (no longer required).
 - Best deterministic parsing rules for command lines.
+- Rename-with-arg reliability across terminals and focus changes.
