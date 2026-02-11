@@ -1,7 +1,7 @@
 'use strict'
 
 const vscode = require('vscode')
-const { parseCommandLine } = require('./parser')
+const { parseCommandLine, tokenizeCommandLine } = require('./parser')
 const { sanitizeTitle } = require('./title')
 
 const EXTENSION_ID = 'terminalTitles'
@@ -66,8 +66,33 @@ function isDedicatedTerminalName(name) {
         /^Sh:\s+.+\.(sh|bash)\b/i,
         /^Bash:\s+.+\.(sh|bash)\b/i,
         /^Node:\s+.+\.m?js\b/i,
+        /^Java:\s+.+\.java\b/i,
     ]
     return patterns.some((pattern) => pattern.test(trimmed))
+}
+
+function isShellBaseline(name) {
+    if (!name) return false
+    return /^(bash|zsh|sh|fish|pwsh|powershell|cmd)$/i.test(name.trim())
+}
+
+function looksLikeAbsolutePath(token) {
+    if (!token) return false
+    return /^(\/|[A-Za-z]:[\\/])/.test(token)
+}
+
+function hasScriptExtension(token, kind) {
+    if (!token) return false
+    const lower = token.toLowerCase()
+    const extMap = {
+        python: ['.py'],
+        r: ['.r'],
+        bash: ['.sh', '.bash'],
+        node: ['.js', '.mjs', '.cjs'],
+        java: ['.java'],
+    }
+    const extensions = extMap[kind] || []
+    return extensions.some((ext) => lower.endsWith(ext))
 }
 
 function ensureTerminalState(terminal) {
@@ -75,22 +100,33 @@ function ensureTerminalState(terminal) {
     if (!state) {
         state = {
             baselineName: terminal && terminal.name ? terminal.name : '',
-            isDedicatedPermanent: false,
+            isDedicated: false,
+            fixedName: null,
             isTemporarilyRenamed: false,
             lastTemporaryTitle: null,
             lastRenameAt: 0,
             lastTitle: '',
             lastCommandLine: '',
         }
-        state.isDedicatedPermanent = isDedicatedTerminalName(state.baselineName)
+        if (state.baselineName && isDedicatedTerminalName(state.baselineName)) {
+            const fixed = sanitizeTitle(state.baselineName)
+            if (fixed) {
+                state.isDedicated = true
+                state.fixedName = fixed
+            }
+        }
         terminalState.set(terminal, state)
         return state
     }
 
     if (!state.baselineName && terminal && terminal.name) {
         state.baselineName = terminal.name
-        if (!state.isDedicatedPermanent) {
-            state.isDedicatedPermanent = isDedicatedTerminalName(state.baselineName)
+        if (!state.isDedicated && isDedicatedTerminalName(state.baselineName)) {
+            const fixed = sanitizeTitle(state.baselineName)
+            if (fixed) {
+                state.isDedicated = true
+                state.fixedName = fixed
+            }
         }
     }
 
@@ -156,12 +192,65 @@ function getPrimaryCommandSegment(commandLine) {
     return commandLine.trim()
 }
 
+function findFirstScriptToken(tokens) {
+    for (let i = 1; i < tokens.length; i += 1) {
+        const token = tokens[i]
+        if (token === '-m' || token === '-c') {
+            i += 1
+            continue
+        }
+        if (token.startsWith('-')) {
+            continue
+        }
+        return token
+    }
+    return null
+}
+
+function looksLikeEditorRun(commandLine, parsed, state) {
+    if (!state.baselineName || !isShellBaseline(state.baselineName)) return false
+    if (parsed.targetType !== 'file') return false
+    const tokens = tokenizeCommandLine(commandLine)
+    if (tokens.length < 2) return false
+    const commandToken = tokens[0]
+    if (!looksLikeAbsolutePath(commandToken)) return false
+    const scriptToken = findFirstScriptToken(tokens)
+    if (!scriptToken) return false
+    if (!looksLikeAbsolutePath(scriptToken)) return false
+    if (!hasScriptExtension(scriptToken, parsed.kind)) return false
+    return true
+}
+
+function deriveFixedName(parsed) {
+    if (!parsed || !parsed.primaryTarget) return ''
+    const labels = {
+        python: 'Python',
+        r: 'R',
+        bash: 'Sh',
+        node: 'Node',
+        java: 'Java',
+    }
+    const label = labels[parsed.kind] || 'Run'
+    return `${label}: ${parsed.primaryTarget}`
+}
+
+async function enforceDedicatedName(terminal, state, options = {}) {
+    if (!state.isDedicated || !state.fixedName) return
+    const name = sanitizeTitle(state.fixedName)
+    if (!name) return
+    await applyTitleToTerminal(terminal, name, {
+        force: true,
+        bypassRateLimit: options.bypassRateLimit === true,
+    })
+}
+
 async function applyTitleToTerminal(terminal, title, options = {}) {
     if (!terminal || !title) return false
 
     const state = ensureTerminalState(terminal)
     const now = Date.now()
     const bypassRateLimit = options.bypassRateLimit === true
+    const force = options.force === true
 
     if (!bypassRateLimit) {
         if (now - state.lastRenameAt < MIN_RENAME_INTERVAL_MS) {
@@ -169,6 +258,7 @@ async function applyTitleToTerminal(terminal, title, options = {}) {
             return false
         }
         if (
+            !force &&
             title === state.lastTitle &&
             now - state.lastRenameAt < DUPLICATE_TITLE_WINDOW_MS
         ) {
@@ -204,11 +294,6 @@ async function renameTerminalForExecution(event) {
     }
 
     const state = ensureTerminalState(event.terminal)
-    if (state.isDedicatedPermanent) {
-        logDebug('start event ignored: dedicated terminal')
-        return
-    }
-
     const rawCommandLine = extractCommandLine(event.execution)
     if (!rawCommandLine) {
         logDebug('execution event missing commandLine')
@@ -229,6 +314,29 @@ async function renameTerminalForExecution(event) {
     if (!commandLine) return
 
     const parsed = parseCommandLine(commandLine)
+
+    if (!state.isDedicated && isDedicatedTerminalName(event.terminal.name)) {
+        const fixed = sanitizeTitle(event.terminal.name)
+        if (fixed) {
+            state.isDedicated = true
+            state.fixedName = fixed
+        }
+    }
+
+    if (!state.isDedicated && looksLikeEditorRun(commandLine, parsed, state)) {
+        const derived = sanitizeTitle(deriveFixedName(parsed) || parsed.title)
+        if (derived) {
+            state.isDedicated = true
+            state.fixedName = derived
+        }
+    }
+
+    if (state.isDedicated) {
+        logDebug('start event: dedicated terminal enforcement')
+        await enforceDedicatedName(event.terminal, state)
+        return
+    }
+
     if (parsed.kind === 'other') {
         logDebug('start event ignored: kind other')
         return
@@ -269,8 +377,9 @@ async function handleExecutionEnd(event) {
     }
 
     const state = ensureTerminalState(event.terminal)
-    if (state.isDedicatedPermanent) {
-        logDebug('end event ignored: dedicated terminal')
+    if (state.isDedicated) {
+        logDebug('end event: dedicated terminal enforcement')
+        await enforceDedicatedName(event.terminal, state)
         return
     }
 
@@ -309,7 +418,7 @@ function registerTestCommand(context) {
             }
 
             const state = ensureTerminalState(terminal)
-            if (state.isDedicatedPermanent) {
+            if (state.isDedicated) {
                 logInfo('set title test skipped: dedicated terminal')
                 void vscode.window.showInformationMessage(
                     'Terminal Titles: Dedicated terminal; no change.'
@@ -344,6 +453,13 @@ function registerTestCommand(context) {
             }
 
             const state = ensureTerminalState(terminal)
+            if (state.isDedicated) {
+                logInfo('revert skipped: dedicated terminal')
+                void vscode.window.showInformationMessage(
+                    'Terminal Titles: Dedicated terminal; no revert.'
+                )
+                return
+            }
             const baseline = sanitizeTitle(state.baselineName)
             if (!baseline) {
                 logInfo('revert skipped: missing baseline')
@@ -395,6 +511,8 @@ function activate(context) {
         typeof vscode.window.onDidStartTerminalShellExecution === 'function'
     const hasShellExecEndEvents =
         typeof vscode.window.onDidEndTerminalShellExecution === 'function'
+    const hasNameChangeEvents =
+        typeof vscode.window.onDidChangeTerminalName === 'function'
 
     logInfo(
         `shell execution events available: ${hasShellExecEvents ? 'yes' : 'no'}`
@@ -420,6 +538,26 @@ function activate(context) {
             handleExecutionEnd
         )
         context.subscriptions.push(endDisposable)
+    }
+
+    logInfo(
+        `terminal name change events available: ${
+            hasNameChangeEvents ? 'yes' : 'no'
+        }`
+    )
+
+    if (hasNameChangeEvents) {
+        const nameDisposable = vscode.window.onDidChangeTerminalName(
+            async (terminal) => {
+                const state = ensureTerminalState(terminal)
+                if (!state.isDedicated || !state.fixedName) return
+                if (renamingTerminals.has(terminal)) return
+                if (terminal.name === state.fixedName) return
+                logDebug(`name changed: enforcing fixed name ${state.fixedName}`)
+                await enforceDedicatedName(terminal, state)
+            }
+        )
+        context.subscriptions.push(nameDisposable)
     }
 }
 
