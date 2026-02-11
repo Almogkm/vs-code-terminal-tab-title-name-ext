@@ -9,7 +9,7 @@
 
 ## Behavior summary
 - **User-started terminals:** only rename when a command runs a file (e.g., `python3 my_script.py`), then revert to the terminal’s original name after it ends.
-- **Dedicated editor terminals:** if the terminal starts with an editor‑owned name (e.g., `Python: my_script.py`), it is treated as permanent and will not be auto‑renamed or reverted.
+- **Dedicated editor terminals:** if the terminal starts with an editor‑owned name (e.g., `Python: my_script.py`), it becomes dedicated and the extension enforces a fixed title on start/end/name changes.
 
 ## Test steps
 1) F5 to launch the Extension Development Host.
