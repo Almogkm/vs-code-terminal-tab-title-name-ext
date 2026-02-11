@@ -20,5 +20,5 @@
 ## Two-mode terminal naming (Feb 11, 2026)
 1. Introduce two behaviors:
    - **Mode A (user-started terminals):** rename **only** for run‑file commands (`parsed.targetType === "file"`), and **revert** to the baseline name on command end.
-   - **Mode B (dedicated terminals):** if the initial terminal name already looks editor‑owned (e.g., `Python: foo.py`), treat it as permanent and never auto‑rename or auto‑revert.
+   - **Mode B (dedicated terminals):** compute a **fixed name** from the first run‑file execution and **re‑enforce** it on start/end/name changes (other extensions may reset the title).
 2. This supersedes the earlier “rename on start only” behavior for all terminals.
