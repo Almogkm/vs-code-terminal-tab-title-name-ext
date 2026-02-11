@@ -9,14 +9,38 @@
   },
   "categories": ["Other"],
   "activationEvents": [
+    "onStartupFinished",
     "onCommand:terminalTitles.debugInfo"
   ],
   "main": "./extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Terminal Titles",
+      "properties": {
+        "terminalTitles.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automatic terminal title updates based on executed commands."
+        },
+        "terminalTitles.debugLogging": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable verbose debug logging to the Terminal Titles output channel."
+        }
+      }
+    },
     "commands": [
       {
         "command": "terminalTitles.debugInfo",
         "title": "Terminal Titles: Debug Info"
+      },
+      {
+        "command": "terminalTitles.renameActiveTerminalTest",
+        "title": "Terminal Titles: Rename Active Terminal Temporary Test"
+      },
+      {
+        "command": "terminalTitles.revertActiveTerminalToBaseline",
+        "title": "Terminal Titles: Revert Active Terminal To Baseline"
       }
     ]
   },
