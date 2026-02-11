@@ -1,3 +1,5 @@
+Historical note: This prompt was for the earlier OSC/`${sequence}` approach. Current implementation uses terminal rename via `workbench.action.terminal.renameWithArg`. Keep this as historical context only.
+
 You wrote learning_terminal_title_sequences.md with a Windows-first bias (lots of PowerShell/cmd sources; no Linux/Ubuntu focus). My OS is Ubuntu 22.04.5 LTS and my primary shell is bash.
 
 Please revise learning_terminal_title_sequences.md and CHECKPOINTS/030_terminal_title_sequences.md so they:

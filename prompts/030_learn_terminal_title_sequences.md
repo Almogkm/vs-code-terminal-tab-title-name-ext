@@ -1,4 +1,6 @@
-Learning task: Terminal title escape sequences.
+Learning task: Terminal title escape sequences (historical reference).
+
+NOTE: This was for the earlier OSC/`${sequence}` approach. Current implementation uses terminal rename via `workbench.action.terminal.renameWithArg`. Keep this as historical context only.
 
 Goals:
 - Learn OSC sequences to set terminal title (OSC 0 / OSC 2) and their syntax.

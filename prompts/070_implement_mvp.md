@@ -4,15 +4,15 @@ Goals:
 - Subscribe to terminal shell execution start events (or best available alternative).
 - For each execution:
   - read execution.commandLine
-  - parse it using parser.ts
+  - parse it using `extension/parser.js` (ported from `src/parser.ts`)
   - compute a safe title string
-  - emit an OSC title sequence into the same terminal so VS Code can display it via ${sequence}
+  - rename the terminal via `workbench.action.terminal.renameWithArg`
 - Provide a configuration setting to enable/disable behavior.
-- Add docs/user_setup.md that tells the user what setting to apply for tab titles (likely ${sequence}) and how to enable shell integration.
+- Add docs/user_setup.md (no VS Code settings required; shell integration still required).
 
 Deliverables:
-- extension/src/extension.ts updated
-- extension/src/title.ts (sanitization + emitters)
+- extension/extension.js updated
+- extension/title.js (sanitization + emitters)
 - docs/user_setup.md
 - CHECKPOINTS/070_mvp_title_setting.md
 
