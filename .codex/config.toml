@@ -1,0 +1,27 @@
+# Project-scoped Codex config
+# This file is loaded only when the project is trusted. :contentReference[oaicite:1]{index=1}
+
+# --- Model defaults (mirrors your existing minimal config.toml) ---
+model = "gpt-5.2-codex"
+model_reasoning_effort = "xhigh"
+personality = "pragmatic"
+
+# --- Safety / scope control ---
+# "workspace-write" means Codex can read/edit/run commands *inside the workspace*
+# and needs approval for outside-workspace and network-requiring actions. :contentReference[oaicite:2]{index=2}
+sandbox_mode = "workspace-write"
+
+# Approval policy:
+# - "on-request" is the common default in auto workflows
+# - "untrusted" is stricter (asks before executing commands more often) :contentReference[oaicite:3]{index=3}
+approval_policy = "on-request"
+
+# Keep web search in the safer cached mode (or disable if you want zero web tool usage). :contentReference[oaicite:4]{index=4}
+web_search = "cached"
+# web_search = "disabled"
+
+# --- Optional: explicitly keep network access OFF for executed commands in workspace-write ---
+# Default is OFF unless you enable it. Leave commented unless you need it. :contentReference[oaicite:5]{index=5}
+# [sandbox_workspace_write]
+# network_access = false
+
