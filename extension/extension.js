@@ -1,6 +1,7 @@
 'use strict'
 
 const vscode = require('vscode')
+const path = require('path')
 const { parseCommandLine, tokenizeCommandLine } = require('./parser')
 const { sanitizeTitle } = require('./title')
 
@@ -13,6 +14,8 @@ const OUTPUT_PREFIX = '[terminal-titles]'
 const MIN_RENAME_INTERVAL_MS = 200
 const DUPLICATE_TITLE_WINDOW_MS = 3000
 const RENAME_GUARD_MS = 120
+const EDITOR_RUN_DETECT_WINDOW_MS = 3000
+const DEFAULT_BASELINE_NAME = 'bash'
 
 let outputChannel = null
 
@@ -71,66 +74,86 @@ function isDedicatedTerminalName(name) {
     return patterns.some((pattern) => pattern.test(trimmed))
 }
 
-function isShellBaseline(name) {
+function isTransientProcessName(name) {
     if (!name) return false
-    return /^(bash|zsh|sh|fish|pwsh|powershell|cmd)$/i.test(name.trim())
+    const trimmed = name.trim().toLowerCase()
+    if (!trimmed) return false
+    const patterns = [
+        /^python(?:\d+(?:\.\d+)*)?$/,
+        /^node(js)?$/,
+        /^r$/,
+        /^rscript$/,
+        /^pwsh$/,
+        /^powershell$/,
+    ]
+    return patterns.some((pattern) => pattern.test(trimmed))
 }
 
-function looksLikeAbsolutePath(token) {
-    if (!token) return false
-    return /^(\/|[A-Za-z]:[\\/])/.test(token)
-}
-
-function hasScriptExtension(token, kind) {
-    if (!token) return false
-    const lower = token.toLowerCase()
-    const extMap = {
-        python: ['.py'],
-        r: ['.r'],
-        bash: ['.sh', '.bash'],
-        node: ['.js', '.mjs', '.cjs'],
-        java: ['.java'],
-    }
-    const extensions = extMap[kind] || []
-    return extensions.some((ext) => lower.endsWith(ext))
+function isShellBaselineName(name) {
+    if (!name) return false
+    const trimmed = name.trim().toLowerCase()
+    return ['bash', 'zsh', 'sh', 'fish'].includes(trimmed)
 }
 
 function ensureTerminalState(terminal) {
     let state = terminalState.get(terminal)
     if (!state) {
         state = {
-            baselineName: terminal && terminal.name ? terminal.name : '',
-            isDedicated: false,
+            baselineName: '',
+            baselineCaptured: false,
+            isDedicatedPermanent: false,
             fixedName: null,
+            openedAtMs: 0,
+            hasSeenAnyExecution: false,
             isTemporarilyRenamed: false,
             lastTemporaryTitle: null,
             lastRenameAt: 0,
             lastTitle: '',
             lastCommandLine: '',
         }
-        if (state.baselineName && isDedicatedTerminalName(state.baselineName)) {
-            const fixed = sanitizeTitle(state.baselineName)
-            if (fixed) {
-                state.isDedicated = true
-                state.fixedName = fixed
-            }
-        }
         terminalState.set(terminal, state)
         return state
     }
 
-    if (!state.baselineName && terminal && terminal.name) {
-        state.baselineName = terminal.name
-        if (!state.isDedicated && isDedicatedTerminalName(state.baselineName)) {
-            const fixed = sanitizeTitle(state.baselineName)
-            if (fixed) {
-                state.isDedicated = true
-                state.fixedName = fixed
-            }
+    return state
+}
+
+function captureBaselineIfNeeded(terminal, state, source) {
+    if (!state || state.baselineCaptured) return
+    const name = terminal && terminal.name ? String(terminal.name) : ''
+    if (!name) return
+    const trimmed = name.trim()
+    if (!trimmed) return
+
+    const isDedicatedName = isDedicatedTerminalName(trimmed)
+    const isTransient = isTransientProcessName(trimmed)
+    const isShellBaseline = isShellBaselineName(trimmed)
+    if (isTransient && !isDedicatedName) {
+        logDebug(`baseline capture skipped (transient): "${trimmed}"`)
+        return
+    }
+
+    const wasDedicated = state.isDedicatedPermanent
+    state.baselineName = trimmed
+    state.baselineCaptured = true
+    const baselineMatches = isDedicatedName
+    if (!wasDedicated) {
+        state.isDedicatedPermanent = baselineMatches
+        if (state.isDedicatedPermanent) {
+            state.fixedName = sanitizeTitle(state.baselineName)
         }
     }
 
-    return state
+    if (source === 'deferred') {
+        logDebug(`baseline deferred capture: "${state.baselineName}"`)
+    } else {
+        logDebug(`baseline captured: "${state.baselineName}"`)
+    }
+    logDebug(
+        `dedicated? ${baselineMatches ? 'yes' : 'no'} (reason: ${
+            baselineMatches ? 'matched regex' : isShellBaseline ? 'shell baseline' : 'no match'
+        })`
+    )
 }
 
 function markRenaming(terminal) {
@@ -192,50 +215,63 @@ function getPrimaryCommandSegment(commandLine) {
     return commandLine.trim()
 }
 
-function findFirstScriptToken(tokens) {
-    for (let i = 1; i < tokens.length; i += 1) {
+function stripRedirectionsFromSegment(segment) {
+    if (!segment) return ''
+    const tokens = tokenizeCommandLine(segment)
+    const redirOperators = new Set([
+        '>',
+        '>>',
+        '<',
+        '2>',
+        '2>>',
+        '&>',
+        '1>',
+        '1>>',
+    ])
+    const redirWithTarget = /^(?:\d>>|\d>|>>|>|<|&>)/
+    const output = []
+    for (let i = 0; i < tokens.length; i += 1) {
         const token = tokens[i]
-        if (token === '-m' || token === '-c') {
+        if (redirOperators.has(token)) {
             i += 1
             continue
         }
-        if (token.startsWith('-')) {
+        if (redirWithTarget.test(token)) {
             continue
         }
-        return token
+        output.push(token)
     }
-    return null
+    return output.join(' ').trim()
 }
 
-function looksLikeEditorRun(commandLine, parsed, state) {
-    if (!state.baselineName || !isShellBaseline(state.baselineName)) return false
-    if (parsed.targetType !== 'file') return false
-    const tokens = tokenizeCommandLine(commandLine)
-    if (tokens.length < 2) return false
-    const commandToken = tokens[0]
-    if (!looksLikeAbsolutePath(commandToken)) return false
-    const scriptToken = findFirstScriptToken(tokens)
-    if (!scriptToken) return false
-    if (!looksLikeAbsolutePath(scriptToken)) return false
-    if (!hasScriptExtension(scriptToken, parsed.kind)) return false
-    return true
+function isInvalidParsedTitle(parsed) {
+    if (!parsed || !parsed.title) return true
+    if (!parsed.primaryTarget) return true
+    const title = String(parsed.title).toLowerCase()
+    return title.includes(': null')
 }
 
-function deriveFixedName(parsed) {
-    if (!parsed || !parsed.primaryTarget) return ''
-    const labels = {
-        python: 'Python',
-        r: 'R',
-        bash: 'Sh',
-        node: 'Node',
-        java: 'Java',
+function isBaselineEligibleForEditorDetection(baselineName) {
+    if (!baselineName) return true
+    return baselineName.trim().toLowerCase() === 'bash'
+}
+
+function activeEditorMatchesParsed(parsed) {
+    if (!parsed || parsed.targetType !== 'file' || !parsed.primaryTarget) {
+        return false
     }
-    const label = labels[parsed.kind] || 'Run'
-    return `${label}: ${parsed.primaryTarget}`
+    const editor = vscode.window.activeTextEditor
+    if (!editor || !editor.document || !editor.document.uri) return false
+    const fsPath = editor.document.uri.fsPath
+    if (!fsPath) return false
+    const base = path.basename(fsPath)
+    if (base === parsed.primaryTarget) return true
+    if (parsed.rawTarget && fsPath.endsWith(parsed.rawTarget)) return true
+    return false
 }
 
 async function enforceDedicatedName(terminal, state, options = {}) {
-    if (!state.isDedicated || !state.fixedName) return
+    if (!state.isDedicatedPermanent || !state.fixedName) return
     const name = sanitizeTitle(state.fixedName)
     if (!name) return
     await applyTitleToTerminal(terminal, name, {
@@ -294,6 +330,11 @@ async function renameTerminalForExecution(event) {
     }
 
     const state = ensureTerminalState(event.terminal)
+    captureBaselineIfNeeded(event.terminal, state, 'deferred')
+    const isFirstExecution = !state.hasSeenAnyExecution
+    if (isFirstExecution) {
+        state.hasSeenAnyExecution = true
+    }
     const rawCommandLine = extractCommandLine(event.execution)
     if (!rawCommandLine) {
         logDebug('execution event missing commandLine')
@@ -313,28 +354,44 @@ async function renameTerminalForExecution(event) {
     const commandLine = getPrimaryCommandSegment(rawCommandLine)
     if (!commandLine) return
 
-    const parsed = parseCommandLine(commandLine)
-
-    if (!state.isDedicated && isDedicatedTerminalName(event.terminal.name)) {
-        const fixed = sanitizeTitle(event.terminal.name)
-        if (fixed) {
-            state.isDedicated = true
-            state.fixedName = fixed
-        }
+    const cleanedCommandLine = stripRedirectionsFromSegment(commandLine)
+    if (!cleanedCommandLine) {
+        logDebug('start event ignored: empty after redirection strip')
+        return
     }
 
-    if (!state.isDedicated && looksLikeEditorRun(commandLine, parsed, state)) {
-        const derived = sanitizeTitle(deriveFixedName(parsed) || parsed.title)
-        if (derived) {
-            state.isDedicated = true
-            state.fixedName = derived
-        }
-    }
+    const parsed = parseCommandLine(cleanedCommandLine)
 
-    if (state.isDedicated) {
+    if (state.isDedicatedPermanent) {
         logDebug('start event: dedicated terminal enforcement')
         await enforceDedicatedName(event.terminal, state)
         return
+    }
+
+    if (
+        isFirstExecution &&
+        !state.isTemporarilyRenamed &&
+        parsed.targetType === 'file' &&
+        !isInvalidParsedTitle(parsed) &&
+        state.openedAtMs > 0 &&
+        Date.now() - state.openedAtMs <= EDITOR_RUN_DETECT_WINDOW_MS &&
+        isBaselineEligibleForEditorDetection(state.baselineName) &&
+        activeEditorMatchesParsed(parsed)
+    ) {
+        const fixedName = sanitizeTitle(parsed.title)
+        if (fixedName) {
+            state.isDedicatedPermanent = true
+            state.fixedName = fixedName
+            logDebug(
+                `dedicated (editor-run) detected; fixedName="${fixedName}" reason: active editor match`
+            )
+            await applyTitleToTerminal(event.terminal, fixedName, {
+                force: true,
+                bypassRateLimit: true,
+                commandLine,
+            })
+            return
+        }
     }
 
     if (parsed.kind === 'other') {
@@ -345,11 +402,15 @@ async function renameTerminalForExecution(event) {
         logDebug('start event ignored: targetType not file')
         return
     }
+    if (isInvalidParsedTitle(parsed)) {
+        logDebug('start event ignored: invalid parsed title')
+        return
+    }
     const safeTitle = sanitizeTitle(parsed.title)
 
     logDebug(`execution start: ${rawCommandLine}`)
-    if (commandLine !== rawCommandLine) {
-        logDebug(`command truncated for parsing: ${commandLine}`)
+    if (cleanedCommandLine !== rawCommandLine) {
+        logDebug(`command normalized for parsing: ${cleanedCommandLine}`)
     }
     logDebug(`parsed title: ${parsed.title}`)
 
@@ -377,7 +438,8 @@ async function handleExecutionEnd(event) {
     }
 
     const state = ensureTerminalState(event.terminal)
-    if (state.isDedicated) {
+    captureBaselineIfNeeded(event.terminal, state, 'deferred')
+    if (state.isDedicatedPermanent) {
         logDebug('end event: dedicated terminal enforcement')
         await enforceDedicatedName(event.terminal, state)
         return
@@ -386,6 +448,16 @@ async function handleExecutionEnd(event) {
     if (!state.isTemporarilyRenamed) {
         logDebug('end event ignored: not temporarily renamed')
         return
+    }
+
+    if (
+        !state.baselineCaptured ||
+        !state.baselineName ||
+        isTransientProcessName(state.baselineName)
+    ) {
+        state.baselineName = DEFAULT_BASELINE_NAME
+        state.baselineCaptured = true
+        logDebug(`baseline fallback applied: "${DEFAULT_BASELINE_NAME}"`)
     }
 
     const baseline = sanitizeTitle(state.baselineName)
@@ -418,7 +490,8 @@ function registerTestCommand(context) {
             }
 
             const state = ensureTerminalState(terminal)
-            if (state.isDedicated) {
+            captureBaselineIfNeeded(terminal, state, 'deferred')
+            if (state.isDedicatedPermanent) {
                 logInfo('set title test skipped: dedicated terminal')
                 void vscode.window.showInformationMessage(
                     'Terminal Titles: Dedicated terminal; no change.'
@@ -453,7 +526,8 @@ function registerTestCommand(context) {
             }
 
             const state = ensureTerminalState(terminal)
-            if (state.isDedicated) {
+            captureBaselineIfNeeded(terminal, state, 'deferred')
+            if (state.isDedicatedPermanent) {
                 logInfo('revert skipped: dedicated terminal')
                 void vscode.window.showInformationMessage(
                     'Terminal Titles: Dedicated terminal; no revert.'
@@ -502,8 +576,12 @@ function activate(context) {
     registerTestCommand(context)
 
     const openDisposable = vscode.window.onDidOpenTerminal((terminal) => {
-        ensureTerminalState(terminal)
-        logDebug(`terminal opened: ${terminal.name}`)
+        const state = ensureTerminalState(terminal)
+        state.openedAtMs = Date.now()
+        captureBaselineIfNeeded(terminal, state, 'open')
+        logDebug(
+            `terminal opened: openedAtMs=${state.openedAtMs} initial name="${terminal.name}"`
+        )
     })
     context.subscriptions.push(openDisposable)
 
@@ -550,7 +628,8 @@ function activate(context) {
         const nameDisposable = vscode.window.onDidChangeTerminalName(
             async (terminal) => {
                 const state = ensureTerminalState(terminal)
-                if (!state.isDedicated || !state.fixedName) return
+                captureBaselineIfNeeded(terminal, state, 'deferred')
+                if (!state.isDedicatedPermanent || !state.fixedName) return
                 if (renamingTerminals.has(terminal)) return
                 if (terminal.name === state.fixedName) return
                 logDebug(`name changed: enforcing fixed name ${state.fixedName}`)

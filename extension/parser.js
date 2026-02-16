@@ -102,6 +102,7 @@ function parseCommandLine(commandLine) {
 
     let kind = classifyCommand(commandBase)
     let targetInfo = { primaryTarget: null, targetType: 'none' }
+    let rawTarget = null
 
     if (kind === 'python') {
         const pythonInfo = parsePythonArgs(args)
@@ -118,6 +119,7 @@ function parseCommandLine(commandLine) {
                 targetType: 'module',
             }
         } else if (pythonInfo.mode === 'script' && pythonInfo.script) {
+            rawTarget = pythonInfo.script
             targetInfo = {
                 primaryTarget: basenameLike(pythonInfo.script),
                 targetType: 'file',
@@ -128,6 +130,7 @@ function parseCommandLine(commandLine) {
     } else if (kind === 'node') {
         const nodeInfo = parseNodeArgs(args)
         if (nodeInfo.mode === 'script' && nodeInfo.script) {
+            rawTarget = nodeInfo.script
             targetInfo = {
                 primaryTarget: basenameLike(nodeInfo.script),
                 targetType: 'file',
@@ -136,6 +139,7 @@ function parseCommandLine(commandLine) {
     } else if (kind === 'r') {
         const rInfo = parseRArgs(commandBase, args)
         if (rInfo.script) {
+            rawTarget = rInfo.script
             targetInfo = {
                 primaryTarget: basenameLike(rInfo.script),
                 targetType: 'file',
@@ -144,6 +148,7 @@ function parseCommandLine(commandLine) {
     } else if (kind === 'bash') {
         const bashInfo = parseShellArgs(args)
         if (bashInfo.script) {
+            rawTarget = bashInfo.script
             targetInfo = {
                 primaryTarget: basenameLike(bashInfo.script),
                 targetType: 'file',
@@ -162,6 +167,7 @@ function parseCommandLine(commandLine) {
         rawTokens,
         primaryTarget: targetInfo.primaryTarget,
         targetType: targetInfo.targetType,
+        rawTarget,
         title,
     }
 }
@@ -335,6 +341,9 @@ function parsePythonArgs(args) {
         if (token.startsWith('-')) {
             continue
         }
+        if (!isLikelyFileToken(token, 'python')) {
+            continue
+        }
         return {
             mode: 'script',
             script: token,
@@ -354,6 +363,9 @@ function parseNodeArgs(args) {
         if (token.startsWith('-')) {
             continue
         }
+        if (!isLikelyFileToken(token, 'node')) {
+            continue
+        }
         return { mode: 'script', script: token }
     }
 
@@ -364,6 +376,9 @@ function parseRArgs(commandBase, args) {
     if (commandBase === 'rscript') {
         for (const token of args) {
             if (!token.startsWith('-')) {
+                if (!isLikelyFileToken(token, 'r')) {
+                    continue
+                }
                 return { script: token }
             }
         }
@@ -373,6 +388,9 @@ function parseRArgs(commandBase, args) {
     for (let i = 0; i < args.length; i += 1) {
         const token = args[i]
         if ((token === '-f' || token === '--file') && i + 1 < args.length) {
+            if (!isLikelyFileToken(args[i + 1], 'r')) {
+                return {}
+            }
             return { script: args[i + 1] }
         }
     }
@@ -435,6 +453,36 @@ function parseMakeArgs(args) {
 
 function makeOptionTakesValue(option) {
     return option === '-f' || option === '-C' || option === '-j'
+}
+
+function isRedirectionToken(token) {
+    if (!token) return false
+    const trimmed = token.trim()
+    const operators = new Set(['>', '>>', '<', '2>', '2>>', '&>', '1>', '1>>'])
+    if (operators.has(trimmed)) return true
+    return /^(?:\d>>|\d>|>>|>|<|&>)/.test(trimmed)
+}
+
+function isLikelyFileToken(token, kind) {
+    if (!token) return false
+    if (isRedirectionToken(token)) return false
+    const lower = token.toLowerCase()
+    const extMap = {
+        python: ['.py'],
+        node: ['.js', '.mjs', '.cjs'],
+        r: ['.r'],
+    }
+    const extensions = extMap[kind] || []
+    if (extensions.some((ext) => lower.endsWith(ext))) return true
+    const looksLikePath =
+        token.includes('/') ||
+        token.includes('\\') ||
+        token.startsWith('./') ||
+        token.startsWith('../') ||
+        token.startsWith('~/') ||
+        token.startsWith('~\\') ||
+        token.startsWith('.')
+    return looksLikePath
 }
 
 module.exports = {
