@@ -22,11 +22,11 @@ This avoids noisy renames for generic commands (e.g., `cd`, `ls`) while preservi
 - **Action on end:** revert to `baselineName` captured at open, regardless of exit code.
 
 ## Mode B — dedicated terminals (fixed title enforced)
-- **Detection:** if a terminal’s **initial** name looks editor-owned (e.g., `Python: something.py`) **or** the first run‑file execution looks like an editor‑owned “dedicated terminal” launch (absolute interpreter + absolute script path, baseline is a shell name).
-- **Behavior:** compute a `fixedName` once and **re-apply** it on execution start/end and terminal name changes. This keeps the title stable even if other extensions revert to `bash`.
+- **Detection:** determined either from the baseline name captured at terminal open (or one deferred capture if the name was empty) **or** from a narrow editor‑run heuristic on the **first** execution within ~3s of open (active editor match + run‑file command + baseline empty/`bash`).
+- **Behavior:** compute `fixedName` once and **re-apply** it on execution start/end and terminal name changes. This keeps the title stable even if other extensions revert to `bash`.
 
 ## Detection heuristic (narrow)
-The `isDedicated` check should be conservative. Examples:
+Baseline‑name match should be conservative. Examples:
 - `/^Python:\s+.+\.py\b/i`
 - `/^R:\s+.+\.r\b/i`
 - `/^Sh:\s+.+\.(sh|bash)\b/i`
@@ -34,18 +34,15 @@ The `isDedicated` check should be conservative. Examples:
 - `/^Node:\s+.+\.m?js\b/i`
 - `/^Java:\s+.+\.java\b/i`
 
-Dedicated “editor‑run” signal (conservative):
-- Baseline name is a shell (e.g., `bash`).
-- Command token is an **absolute** interpreter path (e.g., `/usr/bin/python3`).
-- First non‑flag argument is an **absolute** script path with a matching extension.
+Editor‑run detection (only once, only within ~3s of open):
+- First execution is a run‑file command (`parsed.targetType === "file"`).
+- Active editor path matches the run target (basename or full path).
+- Baseline name is empty or `bash`.
+- Terminal is not temporarily renamed by us.
 
 ## Fixed name derivation
-- When a terminal becomes dedicated and `fixedName` is unset, derive:
-  - `Python: <file.py>`
-  - `R: <file.r>`
-  - `Sh: <file.sh>` / `Sh: <file.bash>`
-  - `Node: <file.js|mjs|cjs>`
-  - `Java: <file.java>`
+- If dedicated via baseline, `fixedName` is the sanitized baseline name.
+- If dedicated via editor‑run detection, `fixedName` comes from the parsed title (basename‑only).
 
 ## Sanitization
 - Always sanitize titles before rename (control chars, BIDI removal, whitespace normalization, length cap).

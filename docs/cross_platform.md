@@ -27,9 +27,8 @@
 - Multi‑command lines are truncated to the **first command segment** before parsing.
 
 ## Dedicated terminal detection (Linux-first)
-- Dedicated terminals are detected conservatively via:
-  - Editor‑owned initial names (e.g., `Python: file.py`), or
-  - First run‑file execution with **absolute** interpreter path + **absolute** script path.
+- Dedicated terminals are detected either from the baseline name at open **or** a narrow editor‑run heuristic (active editor match within ~3s of open).
+- Editor‑owned initial names (e.g., `Python: file.py`) are treated as dedicated.
 - When dedicated, we enforce a **fixed title** on start/end/name changes.
 
 ## Shell integration availability
@@ -40,4 +39,3 @@
 
 ## Appendix: Windows considerations (informational only)
 - Absolute paths may be `C:\\...` and should still parse into basenames correctly.
-- If future Windows support is needed, extend dedicated detection to treat `C:\\...` as absolute interpreter/script paths.
