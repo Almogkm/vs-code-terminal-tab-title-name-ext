@@ -6,13 +6,13 @@ Task: Convert the extension to a zero-build JavaScript entrypoint so F5 works.
 
 Requirements:
 1) Create `extension/extension.js` (CommonJS) exporting `activate` and `deactivate`.
-   - On activate: log `[terminal-titles] activated`
-   - Register command id `terminalTitles.debugInfo`
-   - Command shows `Terminal Titles: Debug Info` as an information message.
+   - On activate: log `[terminal-tab-titles] activated`
+   - Register command id `terminalTabTitles.debugInfo`
+   - Command shows `Terminal Tab Titles: Debug Info` as an information message.
 2) Update `extension/package.json`:
    - Set `"main": "./extension.js"`
-   - Ensure `activationEvents` includes `onCommand:terminalTitles.debugInfo`
-   - Ensure `contributes.commands` includes the command with title `Terminal Titles: Debug Info`
+   - Ensure `activationEvents` includes `onCommand:terminalTabTitles.debugInfo`
+   - Ensure `contributes.commands` includes the command with title `Terminal Tab Titles: Debug Info`
 3) Update `extension/.vscode/launch.json`:
    - Remove any `preLaunchTask` that runs npm/tsc.
    - Keep standard “Run Extension” config working.

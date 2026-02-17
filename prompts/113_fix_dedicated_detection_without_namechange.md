@@ -66,7 +66,7 @@ C) End-event logic
   - Otherwise, keep Mode A revert behavior unchanged.
 
 D) Logging
-When `terminalTitles.debugLogging=true` log:
+When `terminalTabTitles.debugLogging=true` log:
 - terminal opened: openedAtMs, initial name
 - baseline captured / deferred capture (existing)
 - dedicated classification path used:

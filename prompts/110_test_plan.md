@@ -12,9 +12,9 @@ Goals:
   - make: explicitly verify NO rename (documented non-goal)
 
 - Include manual commands that exist in the repo:
-  - "Terminal Titles: Debug Info"
-  - "Terminal Titles: Rename Active Terminal Temporary Test"
-  - "Terminal Titles: Revert Active Terminal To Baseline"
+  - "Terminal Tab Titles: Debug Info"
+  - "Terminal Tab Titles: Rename Active Terminal Temporary Test"
+  - "Terminal Tab Titles: Revert Active Terminal To Baseline"
 
 - Negative tests:
   - Running printf/OSC-like commands must NOT cause rename to "Command: printf"

@@ -43,7 +43,7 @@ If any such code path remains for safety/back-compat, it MUST log a warning and 
   - revert to baseline after end
   - must NOT become fixed/dedicated
 
-4) Logging (when terminalTitles.debugLogging=true)
+4) Logging (when terminalTabTitles.debugLogging=true)
 - When baseline is captured/locked, log:
   - `baseline captured: "<baselineName>"`
   - `dedicated? yes/no (reason: matched regex / no match)`

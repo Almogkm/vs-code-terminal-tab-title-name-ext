@@ -38,12 +38,12 @@ State fields:
 - Keep existing debugInfo command.
 - Keep renameActiveTerminalTest but:
   - make it TEMPORARY (sets isTemporarilyRenamed=true) OR provide both:
-    a) "Terminal Titles: Rename Active Terminal Temporary Test"
-    b) "Terminal Titles: Revert Active Terminal To Baseline"
+    a) "Terminal Tab Titles: Rename Active Terminal Temporary Test"
+    b) "Terminal Tab Titles: Revert Active Terminal To Baseline"
 
 5) Logging
-- OutputChannel “Terminal Titles”
-- With terminalTitles.debugLogging=true:
+- OutputChannel “Terminal Tab Titles”
+- With terminalTabTitles.debugLogging=true:
   - log start/end events, whether rename happened, and whether revert happened
   - do not spam; keep duplicate suppression
 

@@ -11,7 +11,7 @@ Requirements:
        await vscode.commands.executeCommand('workbench.action.terminal.renameWithArg', { name: parsedTitle })
    - ensure the correct terminal is targeted:
        - call execution.terminal.show(true) before rename (preserve focus)
-3) Add a manual command "Terminal Titles: Rename Active Terminal Test" that renames active terminal to "Python: calculate_TVA_single.py" using renameWithArg.
+3) Add a manual command "Terminal Tab Titles: Rename Active Terminal Test" that renames active terminal to "Python: calculate_TVA_single.py" using renameWithArg.
 4) Add robust anti-loop logic:
    - ignore any commandLine that starts with "printf " or matches OSC-title patterns, so user running printf won’t cause "Command: printf" spam.
    - Also ignore our own test command so it doesn’t immediately re-trigger renames if events fire.

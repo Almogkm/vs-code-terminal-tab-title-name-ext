@@ -12,12 +12,12 @@ Requirements:
    - Do NOT use the ST terminator; use BEL for compatibility.
 
 2) Add a new command:
-   - id: terminalTitles.setTitleTest
-   - title: "Terminal Titles: Set Title Test"
+   - id: terminalTabTitles.setTitleTest
+   - title: "Terminal Tab Titles: Set Title Test"
    - behavior: sets active terminal title to "Python: calculate_TVA_single.py"
    - log success/failure
 
-3) Add an OutputChannel "Terminal Titles" and log:
+3) Add an OutputChannel "Terminal Tab Titles" and log:
    - activation
    - whether onDidStartTerminalShellExecution exists
    - when an execution starts: log the commandLine and the parsed title
