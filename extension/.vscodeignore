@@ -1,0 +1,13 @@
+.vscode/**
+src/**
+*.ts
+**/*.ts
+*.map
+**/*.map
+node_modules/**
+**/*.log
+**/*.zip
+**/CHECKPOINTS/**
+**/prompts/**
+**/Intermediate_results*.zip
+**/extension_*.zip

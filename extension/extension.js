@@ -5,12 +5,12 @@ const path = require('path')
 const { parseCommandTokens, tokenizeCommandLine } = require('./parser')
 const { sanitizeTitle } = require('./title')
 
-const EXTENSION_ID = 'terminalTitles'
-const COMMAND_ID = 'terminalTitles.debugInfo'
-const TEST_COMMAND_ID = 'terminalTitles.renameActiveTerminalTest'
-const REVERT_COMMAND_ID = 'terminalTitles.revertActiveTerminalToBaseline'
-const OUTPUT_CHANNEL_NAME = 'Terminal Titles'
-const OUTPUT_PREFIX = '[terminal-titles]'
+const EXTENSION_ID = 'terminalTabTitles'
+const COMMAND_ID = 'terminalTabTitles.debugInfo'
+const TEST_COMMAND_ID = 'terminalTabTitles.renameActiveTerminalTest'
+const REVERT_COMMAND_ID = 'terminalTabTitles.revertActiveTerminalToBaseline'
+const OUTPUT_CHANNEL_NAME = 'Terminal Tab Titles'
+const OUTPUT_PREFIX = '[terminal-tab-titles]'
 const MIN_RENAME_INTERVAL_MS = 200
 const DUPLICATE_TITLE_WINDOW_MS = 3000
 const RENAME_GUARD_MS = 120
@@ -485,7 +485,7 @@ function registerTestCommand(context) {
             if (!terminal) {
                 logInfo('set title test failed: no active terminal')
                 void vscode.window.showInformationMessage(
-                    'Terminal Titles: No active terminal.'
+                    'Terminal Tab Titles: No active terminal.'
                 )
                 return
             }
@@ -495,7 +495,7 @@ function registerTestCommand(context) {
             if (state.isDedicatedPermanent) {
                 logInfo('set title test skipped: dedicated terminal')
                 void vscode.window.showInformationMessage(
-                    'Terminal Titles: Dedicated terminal; no change.'
+                    'Terminal Tab Titles: Dedicated terminal; no change.'
                 )
                 return
             }
@@ -508,7 +508,7 @@ function registerTestCommand(context) {
                 state.isTemporarilyRenamed = true
                 state.lastTemporaryTitle = title
                 void vscode.window.showInformationMessage(
-                    'Terminal Titles: Temporary rename applied.'
+                    'Terminal Tab Titles: Temporary rename applied.'
                 )
             }
         }
@@ -521,7 +521,7 @@ function registerTestCommand(context) {
             if (!terminal) {
                 logInfo('revert failed: no active terminal')
                 void vscode.window.showInformationMessage(
-                    'Terminal Titles: No active terminal.'
+                    'Terminal Tab Titles: No active terminal.'
                 )
                 return
             }
@@ -531,7 +531,7 @@ function registerTestCommand(context) {
             if (state.isDedicatedPermanent) {
                 logInfo('revert skipped: dedicated terminal')
                 void vscode.window.showInformationMessage(
-                    'Terminal Titles: Dedicated terminal; no revert.'
+                    'Terminal Tab Titles: Dedicated terminal; no revert.'
                 )
                 return
             }
@@ -539,7 +539,7 @@ function registerTestCommand(context) {
             if (!baseline) {
                 logInfo('revert skipped: missing baseline')
                 void vscode.window.showInformationMessage(
-                    'Terminal Titles: No baseline name.'
+                    'Terminal Tab Titles: No baseline name.'
                 )
                 return
             }
@@ -551,7 +551,7 @@ function registerTestCommand(context) {
                 state.isTemporarilyRenamed = false
                 state.lastTemporaryTitle = null
                 void vscode.window.showInformationMessage(
-                    'Terminal Titles: Reverted to baseline.'
+                    'Terminal Tab Titles: Reverted to baseline.'
                 )
             }
         }
@@ -568,7 +568,7 @@ function activate(context) {
         COMMAND_ID,
         () => {
             void vscode.window.showInformationMessage(
-                'Terminal Titles: Debug Info'
+                'Terminal Tab Titles: Debug Info'
             )
         }
     )

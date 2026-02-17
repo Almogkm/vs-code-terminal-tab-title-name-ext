@@ -1,13 +1,13 @@
 import * as vscode from 'vscode'
 
-const OUTPUT_CHANNEL_NAME = 'Terminal Titles'
+const OUTPUT_CHANNEL_NAME = 'Terminal Tab Titles'
 
 export function activate(context: vscode.ExtensionContext) {
     const output = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME)
     output.appendLine('Extension activated')
 
     const disposable = vscode.commands.registerCommand(
-        'terminalTitles.debugInfo',
+        'terminalTabTitles.debugInfo',
         () => {
             const info = {
                 appName: vscode.env.appName,
@@ -24,7 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
             output.appendLine(JSON.stringify(info, null, 2))
             output.show(true)
             void vscode.window.showInformationMessage(
-                'Terminal Titles: Debug info written to output channel.'
+                'Terminal Tab Titles: Debug info written to output channel.'
             )
         }
     )

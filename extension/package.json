@@ -1,55 +1,62 @@
 {
-  "name": "terminal-titles",
-  "displayName": "Terminal Titles",
-  "description": "Persist terminal tab titles based on executed commands.",
-  "version": "0.0.1",
+  "name": "terminal-tab-titles",
+  "displayName": "Terminal Tab Titles",
+  "description": "Rename integrated terminal tabs based on executed commands.",
+  "version": "0.1.0",
   "publisher": "local",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Almogkm/terminal-tab-titles.git"
+  },
   "engines": {
     "vscode": "^1.93.0"
   },
-  "categories": ["Other"],
+  "categories": ["Productivity", "Other"],
+  "keywords": [
+    "terminal",
+    "tab",
+    "titles",
+    "rename",
+    "shell",
+    "integrated terminal"
+  ],
+  "license": "MIT",
   "activationEvents": [
     "onStartupFinished",
-    "onCommand:terminalTitles.debugInfo"
+    "onCommand:terminalTabTitles.debugInfo",
+    "onCommand:terminalTabTitles.renameActiveTerminalTest",
+    "onCommand:terminalTabTitles.revertActiveTerminalToBaseline"
   ],
   "main": "./extension.js",
   "contributes": {
     "configuration": {
-      "title": "Terminal Titles",
+      "title": "Terminal Tab Titles",
       "properties": {
-        "terminalTitles.enabled": {
+        "terminalTabTitles.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable automatic terminal title updates based on executed commands."
         },
-        "terminalTitles.debugLogging": {
+        "terminalTabTitles.debugLogging": {
           "type": "boolean",
           "default": false,
-          "description": "Enable verbose debug logging to the Terminal Titles output channel."
+          "description": "Enable verbose debug logging to the Terminal Tab Titles output channel."
         }
       }
     },
     "commands": [
       {
-        "command": "terminalTitles.debugInfo",
-        "title": "Terminal Titles: Debug Info"
+        "command": "terminalTabTitles.debugInfo",
+        "title": "Terminal Tab Titles: Debug Info"
       },
       {
-        "command": "terminalTitles.renameActiveTerminalTest",
-        "title": "Terminal Titles: Rename Active Terminal Temporary Test"
+        "command": "terminalTabTitles.renameActiveTerminalTest",
+        "title": "Terminal Tab Titles: Rename Active Terminal Temporary Test"
       },
       {
-        "command": "terminalTitles.revertActiveTerminalToBaseline",
-        "title": "Terminal Titles: Revert Active Terminal To Baseline"
+        "command": "terminalTabTitles.revertActiveTerminalToBaseline",
+        "title": "Terminal Tab Titles: Revert Active Terminal To Baseline"
       }
     ]
-  },
-  "scripts": {
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
-  },
-  "devDependencies": {
-    "@types/vscode": "^1.93.0",
-    "typescript": "^5.4.5"
   }
 }
