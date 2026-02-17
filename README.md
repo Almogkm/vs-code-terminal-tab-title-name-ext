@@ -1,12 +1,7 @@
-# VS Code Terminal Title Persistor
+# Terminal Tab Titles (VS Code)
 
-A VS Code extension skeleton to persist terminal tab titles based on the last executed command (Cursor-like behavior).
-
-## Goal
-- Set and persist terminal tab titles after a command finishes.
-
-## Core idea
-- Rename terminal tabs directly via VS Code’s `workbench.action.terminal.renameWithArg`.
+A VS Code extension that renames integrated terminal tabs based on executed commands, with safe defaults and zero build tooling.
 
 ## Status
-- Repository bootstrap only. See `CHECKPOINTS/000_bootstrap.md`.
+- Implementation lives in `extension/`.
+- Packaging docs: `docs/release.md`.
