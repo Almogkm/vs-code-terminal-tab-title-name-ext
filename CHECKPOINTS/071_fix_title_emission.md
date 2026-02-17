@@ -11,12 +11,12 @@
 ## Changes
 - Original (historical): Emit titles by executing `printf` in the shell: `printf '\033]2;%s\007' '<title>'`.
 - Original (historical): Added single-quote escaping and stricter sanitization (strip control chars, max 120 chars).
-- Original (historical): Added "Terminal Titles: Set Title Test" command for manual validation.
+- Original (historical): Added "Terminal Tab Titles: Set Title Test" command for manual validation.
 - Original (historical): Added OutputChannel logging for activation, shell exec event availability, command parsing, and title application.
 
 ## Test checklist
 1) F5 to start Extension Development Host.
 2) Apply required settings in the Extension Development Host.
-3) Run "Terminal Titles: Set Title Test" and confirm tab title updates.
+3) Run "Terminal Tab Titles: Set Title Test" and confirm tab title updates.
 4) Run `python3 some_script.py` and confirm title changes to `Python: some_script.py`.
-5) Check OutputChannel "Terminal Titles" for logs.
+5) Check OutputChannel "Terminal Tab Titles" for logs.

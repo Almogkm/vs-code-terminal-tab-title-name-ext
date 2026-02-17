@@ -18,5 +18,5 @@
 - `docs/user_setup.md`
 
 ## Notes
-- Behavior is gated by `terminalTitles.enabled`.
+- Behavior is gated by `terminalTabTitles.enabled`.
 - If shell integration/events are unavailable, the extension does nothing.

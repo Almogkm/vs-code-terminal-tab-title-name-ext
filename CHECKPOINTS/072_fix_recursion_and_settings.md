@@ -17,6 +17,6 @@
 ## Test plan
 1) F5 to launch Extension Development Host.
 2) Original (historical): Open User Settings (JSON) and set `terminal.integrated.tabs.title` to `${sequence}`.
-3) Run "Terminal Titles: Set Title Test" and confirm the tab title updates once (no loop).
+3) Run "Terminal Tab Titles: Set Title Test" and confirm the tab title updates once (no loop).
 4) Run `python3 some_script.py` and confirm title updates.
-5) Check OutputChannel "Terminal Titles" for a single log per command and ignored internal title logs.
+5) Check OutputChannel "Terminal Tab Titles" for a single log per command and ignored internal title logs.

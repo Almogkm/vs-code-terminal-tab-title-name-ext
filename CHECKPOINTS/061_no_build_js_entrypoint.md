@@ -8,5 +8,5 @@
 ## How to test
 1. Press F5 to launch the Extension Development Host.
 2. Open Command Palette.
-3. Run "Terminal Titles: Debug Info".
+3. Run "Terminal Tab Titles: Debug Info".
 4. Confirm a notification appears with the same text.

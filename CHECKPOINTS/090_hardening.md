@@ -16,7 +16,7 @@
 
 ## Notes / testing
 - Tests not run (no harness). Recommended manual check:
-  - Toggle `terminalTitles.debugLogging` and confirm debug logs appear.
+  - Toggle `terminalTabTitles.debugLogging` and confirm debug logs appear.
   - Run `python3 script.py` and confirm rename.
   - Run `python3 a.py && python3 b.py` and confirm first command is used.
   - Run `printf '\033]2;X\007'` and confirm no rename.

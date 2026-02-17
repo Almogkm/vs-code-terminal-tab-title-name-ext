@@ -11,6 +11,6 @@
 
 ## How to run
 1. F5 to open Extension Development Host.
-2. Open an integrated terminal and Output panel → **Terminal Titles**.
-3. Enable `terminalTitles.debugLogging` to see detailed logs.
+2. Open an integrated terminal and Output panel → **Terminal Tab Titles**.
+3. Enable `terminalTabTitles.debugLogging` to see detailed logs.
 4. Follow `docs/test_plan.md` in order.

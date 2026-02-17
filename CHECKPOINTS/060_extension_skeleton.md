@@ -4,7 +4,7 @@
 
 ## Summary
 - Created the VS Code extension skeleton under `extension/` with TypeScript setup.
-- Added a minimal activation plus a command palette entry: "Terminal Titles: Debug Info".
+- Added a minimal activation plus a command palette entry: "Terminal Tab Titles: Debug Info".
 - No terminal renaming logic implemented yet.
 
 ## Files added
