@@ -80,18 +80,19 @@ function tokenizeCommandLine(input, options = {}) {
     return tokens.filter((token) => token.length > 0 || options.keepEmpty)
 }
 
-function parseCommandLine(commandLine) {
-    const rawTokens = tokenizeCommandLine(commandLine)
-    const argv = stripWrappers(rawTokens)
+function parseCommandTokens(rawTokens) {
+    const tokens = Array.isArray(rawTokens) ? rawTokens.slice() : []
+    const argv = stripWrappers(tokens)
 
     if (argv.length === 0) {
         return {
             kind: 'other',
             command: null,
             argv,
-            rawTokens,
+            rawTokens: tokens,
             primaryTarget: null,
             targetType: 'none',
+            rawTarget: null,
             title: 'Terminal',
         }
     }
@@ -164,12 +165,16 @@ function parseCommandLine(commandLine) {
         kind,
         command,
         argv,
-        rawTokens,
+        rawTokens: tokens,
         primaryTarget: targetInfo.primaryTarget,
         targetType: targetInfo.targetType,
         rawTarget,
         title,
     }
+}
+
+function parseCommandLine(commandLine) {
+    return parseCommandTokens(tokenizeCommandLine(commandLine))
 }
 
 function classifyCommand(commandBase) {
@@ -488,6 +493,7 @@ function isLikelyFileToken(token, kind) {
 module.exports = {
     tokenizeCommandLine,
     parseCommandLine,
+    parseCommandTokens,
     classifyCommand,
     formatTitle,
 }

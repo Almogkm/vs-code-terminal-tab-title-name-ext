@@ -2,7 +2,7 @@
 
 const vscode = require('vscode')
 const path = require('path')
-const { parseCommandLine, tokenizeCommandLine } = require('./parser')
+const { parseCommandTokens, tokenizeCommandLine } = require('./parser')
 const { sanitizeTitle } = require('./title')
 
 const EXTENSION_ID = 'terminalTitles'
@@ -216,7 +216,7 @@ function getPrimaryCommandSegment(commandLine) {
 }
 
 function stripRedirectionsFromSegment(segment) {
-    if (!segment) return ''
+    if (!segment) return []
     const tokens = tokenizeCommandLine(segment)
     const redirOperators = new Set([
         '>',
@@ -241,7 +241,7 @@ function stripRedirectionsFromSegment(segment) {
         }
         output.push(token)
     }
-    return output.join(' ').trim()
+    return output
 }
 
 function isInvalidParsedTitle(parsed) {
@@ -354,13 +354,13 @@ async function renameTerminalForExecution(event) {
     const commandLine = getPrimaryCommandSegment(rawCommandLine)
     if (!commandLine) return
 
-    const cleanedCommandLine = stripRedirectionsFromSegment(commandLine)
-    if (!cleanedCommandLine) {
+    const tokensForParsing = stripRedirectionsFromSegment(commandLine)
+    if (!tokensForParsing.length) {
         logDebug('start event ignored: empty after redirection strip')
         return
     }
 
-    const parsed = parseCommandLine(cleanedCommandLine)
+    const parsed = parseCommandTokens(tokensForParsing)
 
     if (state.isDedicatedPermanent) {
         logDebug('start event: dedicated terminal enforcement')
@@ -409,8 +409,9 @@ async function renameTerminalForExecution(event) {
     const safeTitle = sanitizeTitle(parsed.title)
 
     logDebug(`execution start: ${rawCommandLine}`)
-    if (cleanedCommandLine !== rawCommandLine) {
-        logDebug(`command normalized for parsing: ${cleanedCommandLine}`)
+    const normalizedForLog = tokensForParsing.join(' ')
+    if (normalizedForLog !== rawCommandLine) {
+        logDebug(`tokens for parsing: ${JSON.stringify(tokensForParsing)}`)
     }
     logDebug(`parsed title: ${parsed.title}`)
 
