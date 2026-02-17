@@ -20,6 +20,8 @@
 6. Run `node app.js` and confirm the title changes to `Node: app.js`, then reverts after exit.
 7. Run `/bin/python3 /full/path/some_script.py` with a **different** active editor file (or none) and confirm temporary rename then revert; terminal must **not** become fixed/dedicated.
 8. **Fresh EDH / first terminal baseline regression:** open the first terminal, run `python3 other_script.py`, and confirm the title reverts to `bash` (not `python3`).
+9. Run `python3 "with space.py"` and confirm the title becomes `Python: with space.py`, then reverts.
+10. Run `/bin/python3 "/abs/path/with space.py"` and confirm the title becomes `Python: with space.py`, then reverts.
 
 **Mode B — Dedicated Terminal**
 1. Use **“Run Python File in Dedicated Terminal”** from the editor.
@@ -27,6 +29,7 @@
 3. Run `cd tools` inside that same terminal and confirm the title remains `Python: original.py`.
 4. Run another script inside that same terminal and confirm the title remains `Python: original.py`.
 5. Note: Dedicated mode is detected either from the baseline name at open or via the editor‑run heuristic (active editor match within ~3s of open).
+6. Run “Run Python File in Dedicated Terminal” for `with space.py` and confirm the title becomes and stays `Python: with space.py`.
 
 **Negative Tests**
 1. Run `node -v 2>/dev/null || true` and confirm **no rename** occurs.
