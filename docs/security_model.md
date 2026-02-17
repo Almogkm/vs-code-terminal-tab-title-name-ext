@@ -26,7 +26,7 @@ This extension observes terminal shell execution events and renames the terminal
 - Renames are guarded with a short re-entrancy window.
 
 ## Logging
-- Debug logging is **toggleable** via `terminalTitles.debugLogging`.
+- Debug logging is **toggleable** via `terminalTabTitles.debugLogging`.
 - Logs are local-only (OutputChannel), no telemetry.
 
 ## Failure modes and safe behavior

@@ -3,13 +3,13 @@
 **Setup**
 1. Launch Extension Development Host with F5.
 2. Open an integrated terminal.
-3. Open the Output panel and select **Terminal Titles**.
-4. Set `terminalTitles.debugLogging` to `true` for verbose logs.
+3. Open the Output panel and select **Terminal Tab Titles**.
+4. Set `terminalTabTitles.debugLogging` to `true` for verbose logs.
 
 **Manual Commands**
-1. Run **"Terminal Titles: Debug Info"** and confirm the info message appears.
-2. Run **"Terminal Titles: Rename Active Terminal Temporary Test"** and confirm the active terminal title updates.
-3. Run **"Terminal Titles: Revert Active Terminal To Baseline"** and confirm the title reverts to the baseline.
+1. Run **"Terminal Tab Titles: Debug Info"** and confirm the info message appears.
+2. Run **"Terminal Tab Titles: Rename Active Terminal Temporary Test"** and confirm the active terminal title updates.
+3. Run **"Terminal Tab Titles: Revert Active Terminal To Baseline"** and confirm the title reverts to the baseline.
 
 **Mode A — User-Started Terminal**
 1. Run `cd tools` and confirm no rename occurs.

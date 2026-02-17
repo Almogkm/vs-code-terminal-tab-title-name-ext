@@ -4,8 +4,8 @@
 - No VS Code settings are required. The extension renames terminal tabs directly.
 
 ## Extension setting
-- `terminalTitles.enabled` (boolean, default `true`): enable/disable title updates.
-- `terminalTitles.debugLogging` (boolean, default `false`): verbose logs in the Output panel.
+- `terminalTabTitles.enabled` (boolean, default `true`): enable/disable title updates.
+- `terminalTabTitles.debugLogging` (boolean, default `false`): verbose logs in the Output panel.
 
 ## Behavior summary
 - **User-started terminals:** only rename when a command runs a file (e.g., `python3 my_script.py`), then revert to the terminal’s original name after it ends.
@@ -14,10 +14,10 @@
 ## Test steps
 1) F5 to launch the Extension Development Host.
 2) Open or focus an integrated terminal.
-3) Run **"Terminal Titles: Rename Active Terminal Temporary Test"**.
-4) Run **"Terminal Titles: Revert Active Terminal To Baseline"**.
+3) Run **"Terminal Tab Titles: Rename Active Terminal Temporary Test"**.
+4) Run **"Terminal Tab Titles: Revert Active Terminal To Baseline"**.
 5) Run `python3 some_script.py` and confirm title updates to `Python: some_script.py`, then reverts after exit.
-6) Check the **Output** panel → **Terminal Titles** for logs.
+6) Check the **Output** panel → **Terminal Tab Titles** for logs.
 
 ## Notes
 - The extension uses VS Code’s terminal rename command; it does not send OSC/printf sequences.
