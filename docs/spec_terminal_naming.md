@@ -19,7 +19,10 @@ This avoids noisy renames for generic commands (e.g., `cd`, `ls`) while preservi
 - **Rename condition:** only when `parsed.targetType === "file"`.
 - **Exclude:** if `parsed.kind === "other"`, do not rename.
 - **Action on start:** rename terminal to `sanitizeTitle(parsed.title)`.
-- **Action on end:** revert to `baselineName` captured at open, regardless of exit code.
+- **Action on end:** revert using baseline-aware rules:
+  - if baseline is missing, shell-like, or transient-process-like, use reset token `RESET_NAME = " "` (single space).
+  - otherwise revert to sanitized `baselineName`.
+  - note: this single-space reset is a compatibility workaround because some VS Code environments reject empty `renameWithArg` names.
 
 ## Mode B — dedicated terminals (fixed title enforced)
 - **Detection:** determined either from the baseline name captured at terminal open (or one deferred capture if the name was empty) **or** from a narrow editor‑run heuristic on the **first** execution within ~3s of open (active editor match + run‑file command + baseline empty/`bash`).
@@ -56,3 +59,4 @@ Editor‑run detection (only once, only within ~3s of open):
 ## Open questions
 - Best source of `baselineName` if terminal is renamed by the user after open.
 - How to handle multi-command lines where a run-file command is not first.
+- Whether future VS Code versions will reliably support empty-name resets for `renameWithArg` (would allow removing the single-space workaround).

@@ -13,14 +13,14 @@ cd extension
 npx @vscode/vsce package
 ```
 
-Expected output: `terminal-tab-titles-0.1.0.vsix` created in `extension/`.
+Expected output: `terminal-tab-titles-0.1.1.vsix` created in `extension/`.
 
 **Network required:** the first time you run `npx @vscode/vsce package`, npm may download `@vscode/vsce`.
 
 ## Local Install (Normal VS Code)
 1. Open VS Code.
 2. Extensions view → “…” menu → **Install from VSIX…**
-3. Select `extension/terminal-tab-titles-0.1.0.vsix`.
+3. Select `extension/terminal-tab-titles-0.1.1.vsix`.
 
 ## Uninstall
 1. Extensions view.
@@ -43,3 +43,12 @@ npx @vscode/vsce publish
 ## Notes / TODOs
 - If you have a public repo, add `repository`, `bugs`, and `homepage` fields in `extension/package.json`.
 - Confirm `engines.vscode` matches the minimum VS Code version you want to support.
+
+## v0.1.1 Behavior Fix Note
+- v0.1.1 fixes undedicated-terminal revert regressions:
+  - no literal `${process}` rename payloads
+  - no empty rename payloads (which can fail with `No name argument provided` in some environments)
+- Reset-to-default behavior is implemented with `RESET_NAME = " "` (single space) as a `renameWithArg` compatibility workaround.
+
+## Troubleshooting
+- If you still see `No name argument provided`, capture OutputChannel logs from **Terminal Tab Titles** and verify no empty/missing rename payload path is present in your installed build.
